@@ -1,0 +1,68 @@
+-- Schema iniziale SourcingDesk (MySQL 8 / MariaDB 10.6+)
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash CHAR(64) PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY ix_sessions_user (user_id),
+  CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS suppliers (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  website VARCHAR(2048) NULL,
+  country VARCHAR(64) NULL,
+  email VARCHAR(255) NULL,
+  notes TEXT NULL,
+  dedupe_hash CHAR(64) NOT NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_suppliers_dedupe_hash (dedupe_hash),
+  KEY ix_suppliers_owner (created_by),
+  CONSTRAINT fk_suppliers_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS offers (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  supplier_id BIGINT UNSIGNED NULL,
+  title VARCHAR(500) NOT NULL,
+  url VARCHAR(2048) NOT NULL,
+  price DECIMAL(12,2) NULL,
+  currency CHAR(3) NULL,
+  moq INT UNSIGNED NULL,
+  lead_time_days INT UNSIGNED NULL,
+  description TEXT NULL,
+  source VARCHAR(16) NOT NULL DEFAULT 'manual',
+  ai_score TINYINT UNSIGNED NULL,
+  ai_summary TEXT NULL,
+  ai_source VARCHAR(16) NULL,
+  dedupe_hash CHAR(64) NOT NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_offers_dedupe_hash (dedupe_hash),
+  KEY ix_offers_owner (created_by, created_at),
+  CONSTRAINT fk_offers_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_offers_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  actor_id BIGINT UNSIGNED NULL,
+  action VARCHAR(64) NOT NULL,
+  entity VARCHAR(32) NOT NULL,
+  entity_id BIGINT UNSIGNED NULL,
+  meta JSON NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY ix_audit_actor (actor_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

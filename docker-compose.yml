@@ -1,0 +1,30 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: sourcingdesk
+      MYSQL_USER: sourcingdesk
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sourcingdesk}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-root}
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      DATABASE_URL: mysql://sourcingdesk:${MYSQL_PASSWORD:-sourcingdesk}@db:3306/sourcingdesk
+      AI_API_KEY: ${AI_API_KEY:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+volumes:
+  dbdata:

@@ -1,0 +1,20 @@
+{
+  "name": "sourcingdesk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SourcingDesk – gestione fornitori e offerte B2B (Node 22, node:http, MySQL)",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "test": "node --test test/*.test.js",
+    "lint": "node scripts/lint.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.0",
+    "pg": "^8.23.1"
+  }
+}

@@ -1,0 +1,11 @@
+-- Solo per DB legacy con duplicati in offers.dedupe_hash. Eseguire dopo un backup completo:
+-- in MySQL le DDL fanno commit implicito.
+CREATE TABLE IF NOT EXISTS offers_dedupe_backup LIKE offers;
+INSERT INTO offers_dedupe_backup
+SELECT o.* FROM offers o
+JOIN (SELECT id, ROW_NUMBER() OVER (PARTITION BY dedupe_hash ORDER BY updated_at DESC, id DESC) AS rn
+      FROM offers WHERE dedupe_hash IS NOT NULL) r ON r.id = o.id
+WHERE r.rn > 1;
+-- (ri-puntare qui eventuali FK verso l'id superstite)
+DELETE o FROM offers o JOIN offers_dedupe_backup b ON b.id = o.id;
+ALTER TABLE offers ADD UNIQUE KEY uq_offers_dedupe_hash (dedupe_hash);

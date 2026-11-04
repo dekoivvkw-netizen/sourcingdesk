@@ -1,0 +1,9 @@
+node_modules
+.env
+.git
+*.zip
+test
+.runtime
+data
+DEMO_CREDENTIALS.txt
+screens
